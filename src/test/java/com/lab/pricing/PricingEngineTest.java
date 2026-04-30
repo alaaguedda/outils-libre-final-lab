@@ -18,63 +18,65 @@ class PricingEngineTest {
 
     @Test
     void testSubtotalCalculation() {
-        List<Double> prices = List.of(10.0, 20.0);
-        List<Integer> quantities = List.of(2, 3);
-        double result = engine.getSubtotal(prices, quantities);
-        assertEquals(80.0, result, 0.001);
+        OrderSummary summary = engine.calculateOrder(
+            List.of(10.0, 20.0), List.of(2, 3), "REGULAR", null);
+        assertEquals(80.0, summary.getSubtotal(), 0.001);
     }
 
     @Test
     void testRegularCustomerNoDiscount() {
-        List<Double> prices = List.of(100.0);
-        List<Integer> quantities = List.of(1);
-        double result = engine.calc(prices, quantities, "REGULAR", null);
-        // subtotal=100, disc=0, tax=10%, total=110
-        assertEquals(110.0, result, 0.001);
+        OrderSummary summary = engine.calculateOrder(
+            List.of(100.0), List.of(1), "REGULAR", null);
+        assertEquals(0.0,   summary.getDiscountAmount(), 0.001);
+        assertEquals(10.0,  summary.getTax(),            0.001);
+        assertEquals(110.0, summary.getFinalPrice(),     0.001);
     }
 
     @Test
     void testSave10DiscountCode() {
-        List<Double> prices = List.of(100.0);
-        List<Integer> quantities = List.of(1);
-        double result = engine.calc(prices, quantities, "REGULAR", "SAVE10");
-        // subtotal=100, disc=10, afterDisc=90, tax=9, total=99
-        assertEquals(99.0, result, 0.001);
+        OrderSummary summary = engine.calculateOrder(
+            List.of(100.0), List.of(1), "REGULAR", "SAVE10");
+        assertEquals(10.0, summary.getDiscountAmount(), 0.001);
+        assertEquals(9.0,  summary.getTax(),            0.001);
+        assertEquals(99.0, summary.getFinalPrice(),     0.001);
     }
 
     @Test
     void testSave20DiscountCode() {
-        List<Double> prices = List.of(100.0);
-        List<Integer> quantities = List.of(1);
-        double result = engine.calc(prices, quantities, "REGULAR", "SAVE20");
-        // subtotal=100, disc=20, afterDisc=80, tax=8, total=88
-        assertEquals(88.0, result, 0.001);
+        OrderSummary summary = engine.calculateOrder(
+            List.of(100.0), List.of(1), "REGULAR", "SAVE20");
+        assertEquals(88.0, summary.getFinalPrice(), 0.001);
     }
 
     @Test
     void testVipCustomerDiscount() {
-        List<Double> prices = List.of(100.0);
-        List<Integer> quantities = List.of(1);
-        double result = engine.calc(prices, quantities, "VIP", null);
-        // subtotal=100, disc=15(VIP), afterDisc=85, tax=6.8(VIP 8%), total=91.8
-        assertEquals(91.8, result, 0.001);
+        OrderSummary summary = engine.calculateOrder(
+            List.of(100.0), List.of(1), "VIP", null);
+        assertEquals(15.0, summary.getDiscountAmount(), 0.001);
+        assertEquals(6.8,  summary.getTax(),            0.001);
+        assertEquals(91.8, summary.getFinalPrice(),     0.001);
     }
 
     @Test
     void testVipWithDiscountCode() {
-        List<Double> prices = List.of(100.0);
-        List<Integer> quantities = List.of(1);
-        double result = engine.calc(prices, quantities, "VIP", "SAVE10");
-        // subtotal=100, disc=10+15=25, afterDisc=75, tax=6, total=81
-        assertEquals(81.0, result, 0.001);
+        OrderSummary summary = engine.calculateOrder(
+            List.of(100.0), List.of(1), "VIP", "SAVE10");
+        assertEquals(25.0, summary.getDiscountAmount(), 0.001);
+        assertEquals(81.0, summary.getFinalPrice(),     0.001);
     }
 
     @Test
     void testMultipleItems() {
-        List<Double> prices = List.of(10.0, 5.0, 20.0);
-        List<Integer> quantities = List.of(3, 4, 1);
-        double result = engine.calc(prices, quantities, "REGULAR", null);
-        // subtotal = 30+20+20 = 70, tax=7, total=77
-        assertEquals(77.0, result, 0.001);
+        OrderSummary summary = engine.calculateOrder(
+            List.of(10.0, 5.0, 20.0), List.of(3, 4, 1), "REGULAR", null);
+        assertEquals(70.0, summary.getSubtotal(),   0.001);
+        assertEquals(77.0, summary.getFinalPrice(), 0.001);
+    }
+
+    @Test
+    void testOrderSummaryToString() {
+        OrderSummary summary = engine.calculateOrder(
+            List.of(100.0), List.of(1), "REGULAR", null);
+        assertTrue(summary.toString().contains("subtotal=100.00"));
     }
 }
